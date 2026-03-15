@@ -8,8 +8,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "chassis_task.h"
-#include "bsp_usb.h"
-#include "Serial.h"
 #include "usart.h"
 #include <stdbool.h>
 #include "usbd_cdc_if.h"
@@ -17,10 +15,7 @@
 #include "cmsis_os2.h"
 #include "usb_device.h"
 #include "DJI_Motor.h"
-#include "can.h"
 #include "MyMath.h"
-#include <math.h>
-
 #include "chassis.h"
 #include "dr16.h"
 

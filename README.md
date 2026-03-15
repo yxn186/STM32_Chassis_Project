@@ -1,40 +1,71 @@
-﻿# STM32_GIMBAL_Projects
+﻿# STM32_Chassis_Projects
 
-基于 STM32F405 + HAL + CubeMX + CMake 的云台控制学习/开发工程
+基于 STM32F405 + HAL + CubeMX + CMake 的底盘控制学习/开发工程
 
 ## 程序函数调用框图
 
 ```mermaid
+
 flowchart TD
-A[系统启动] --> B[初始化任务]
-B --> C[初始化云台模块]
-C --> D[初始化串口 USB 电机 BMI088 PID]
 
-D --> E[主控任务 1ms]
-D --> F[IMU解算任务]
-D --> G[打印任务]
+    subgraph Init[初始化]
+        A[RTOS创建任务]
+        B[StartInitTask]
+        C[底盘初始化]
+        D[DR16初始化]
+        E[USB初始化]
+        A --> B
+        B --> C
+        B --> D
+        B --> E
+    end
 
-H[上位机视觉输入] --> I[USB回调]
-I --> J[目标角度]
+    subgraph Input[遥控输入]
+        F[UART接收DR16]
+        G[DR16数据解析]
+        H[1ms状态更新]
+        I[获取遥控量 X Y Z]
+        J[遥控量处理]
+        F --> G
+        G --> I
+        H --> I
+        I --> J
+    end
 
-K[BMI088中断] --> L[读取陀螺仪和加速度]
-L --> M[姿态解算]
-M --> N[得到云台 yaw pitch]
+    subgraph Control[底盘控制]
+        K[Chassis_loop]
+        L[设置目标速度]
+        M[quan'xiang逆解]
+        N[4路电机速度PID]
+        O[生成控制量]
+        J --> K
+        K --> L
+        L --> M
+        M --> N
+        N --> O
+    end
 
-E --> J
-E --> N
-E --> O[PID控制计算]
-O --> P[电机输出]
+    subgraph Motor[执行与反馈]
+        P[下发到电机组]
+        Q[CAN总线]
+        R[3508电机 x4]
+        S[电机反馈]
+        T[实际角速度]
+        O --> P
+        P --> Q
+        Q --> R
+        R --> S
+        S --> T
+        T --> N
+    end
 
-P --> Q[CAN发送]
-Q --> R[Yaw电机]
-Q --> S[Pitch电机]
+    subgraph Safety[存活检测]
+        U[100ms存活检测]
+        V[超时重置UART]
+        U -.-> V
+        V -.-> F
+    end
 
-R --> T[电机反馈]
-S --> T
-T --> E
-
-G --> N
 ```
 
 
@@ -63,7 +94,6 @@ G --> N
 │  │  ├─ DJI_Motor/
 │  │  ├─ DR16/
 │  │  ├─ Math/
-│  │  ├─ OLED/
 │  │  └─ Serial/
 │  └─ 3_application/         # 业务应用层
 │     ├─ bmi088/

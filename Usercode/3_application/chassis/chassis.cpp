@@ -150,9 +150,7 @@ void Class_Chassis::Speed_PID_To_Out_Calculate(void)
     for(uint8_t i = 0; i < 4; i++)
   {
     //获取当前速度 存入PID当前值
-    //大疆系电机返回的速度到底是“电机转子速度”还是“减速后输出轴速度”？待思考
-    //思考
-    //思考
+
     Chassis.PID_Motor[i].Set_Current_Speed(Chassis_DJI_Motor[i].Get_AngleSpeed());
   
     //PID
@@ -171,10 +169,6 @@ void Class_Chassis::Speed_PID_To_Force_Calculate(void)
 {
   for(uint8_t i = 0; i < 4; i++)
   {
-    //大疆系电机返回的速度到底是“电机转子速度”还是“减速后输出轴速度”？思考
-    //思考
-    //思考
-
     //获取当前速度 存入当前值
     Chassis.Motor_Current_AngleSpeed[i] = Chassis_DJI_Motor[i].Get_AngleSpeed();
   }
