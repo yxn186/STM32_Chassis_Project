@@ -35,7 +35,7 @@ flowchart TD
     subgraph Control[底盘控制]
         K[Chassis_loop]
         L[设置目标速度]
-        M[quan'xiang逆解]
+        M[全向轮逆解]
         N[4路电机速度PID]
         O[生成控制量]
         J --> K
@@ -76,16 +76,27 @@ flowchart TD
 
 ```text
 .
-├─ Core/                     # CubeMX 生成：核心启动与外设初始化
-├─ Drivers/                  # HAL/CMSIS
-├─ Middlewares/              # USB Device 等中间件
-├─ USB_DEVICE/               # USB 设备栈与接口
+├─ .idea/                    # JetBrains 工程配置
+├─ .settings/                # STM32CubeIDE/Eclipse 配置
+├─ .vscode/                  # VS Code 配置
+├─ build/                    # 本地构建输出
+├─ build-vscode/             # VS Code 构建输出
 ├─ cmake/
 │  └─ stm32cubemx/           # CubeMX 转换后的 CMake 子工程
+├─ Core/                     # CubeMX 生成：核心启动、RTOS 与外设初始化
+│  ├─ Inc/
+│  └─ Src/
+├─ Drivers/                  # HAL/CMSIS
+├─ Middlewares/              # FreeRTOS、USB Device 等中间件
+├─ USB_DEVICE/               # USB 设备栈接口与目标适配
+│  ├─ App/
+│  └─ Target/
 ├─ Usercode/
 │  ├─ 1_bsp/                 # 板级支持层
 │  │  ├─ CAN/
+│  │  ├─ CubeMX/
 │  │  ├─ DWT/
+│  │  ├─ MyRTOS/
 │  │  ├─ SPI/
 │  │  ├─ USART/
 │  │  └─ USB/
@@ -97,11 +108,15 @@ flowchart TD
 │  │  └─ Serial/
 │  └─ 3_application/         # 业务应用层
 │     ├─ bmi088/
-│     └─ gimbal_task/
+│     ├─ chassis/
+│     └─ chassis_task/
 ├─ CMakeLists.txt
 ├─ CMakePresets.json
+├─ F405RGT6Project.ioc
 ├─ GeneratorBefore.bat
-└─ GeneratorAfter.bat
+├─ GeneratorAfter.bat
+├─ startup_stm32f405xx.s
+└─ STM32F405XX_FLASH.ld
 ```
 
 ### 分层使用逻辑
