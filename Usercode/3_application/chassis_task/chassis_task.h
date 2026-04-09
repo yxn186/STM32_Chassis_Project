@@ -52,7 +52,17 @@ void Chassis_Remote_Calculate(void);
  * 
  */
 void Chassis_DR16_Get_Data(void);
+/**
+ * @brief 底盘DR16拨码开关状态检测
+ * 
+ */
+void Chassis_DR16_Switch_Detect();
 
+/**
+ * @brief 底盘控制函数
+ * 
+ */
+void Chassis_Control(void);
 #ifdef __cplusplus
 }
 #endif

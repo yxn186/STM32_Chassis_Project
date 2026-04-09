@@ -68,6 +68,7 @@ typedef enum
     DR16_Switch_Status_DOWN,
 }Enum_DR16_Switch_Status;
 
+
 /**
  * @brief 按键状态
  *
@@ -197,13 +198,13 @@ public:
     * @brief 100ms定期检测遥控器DR16是否存活
     *
     */
-    void task_100ms_alive_detection(void);
+    void Task_100ms_Alive_Detection(void);
 
     /**
     * @brief 1ms计算数据函数
     *
     */
-    void task_1ms_data_calculate(void);
+    void Task_1ms_Data_Calculate(void);
 
 protected:
     // 初始化相关常量

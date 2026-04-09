@@ -77,10 +77,10 @@ void Class_DR16::UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length)
 }
 
 /**
- * @brief 100ms定期检测遥控器DR16是否存活
+ * @brief 100ms任务定期检测遥控器DR16是否存活
  *
  */
-void Class_DR16::task_100ms_alive_detection(void)
+void Class_DR16::Task_100ms_Alive_Detection(void)
 {
     // 判断该时间段内是否接收过遥控器DR16数据
     if (Flag == Pre_Flag)
@@ -99,10 +99,10 @@ void Class_DR16::task_100ms_alive_detection(void)
 }
 
 /**
- * @brief 1ms计算数据函数
+ * @brief 1ms任务计算数据函数
  *
  */
-void Class_DR16::task_1ms_data_calculate(void)
+void Class_DR16::Task_1ms_Data_Calculate(void)
 {
     // 数据处理过程
     Struct_DR16_UART_Data *tmp_buffer = (Struct_DR16_UART_Data *) UART_Manage_Object->Rx_Buffer;

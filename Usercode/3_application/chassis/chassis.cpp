@@ -108,6 +108,34 @@ void Chassis_Init(void)
 }
 
 /**
+ * @brief 重置所有底盘PID的积分项
+ * 在模式切换时调用，防止积分残留导致恢复运行时输出突变
+ */
+void Chassis_PID_Reset(void)
+{
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    Chassis.PID_Motor[i].Reset();
+  }
+  Chassis.PID_X.Reset();
+  Chassis.PID_Y.Reset();
+  Chassis.PID_W.Reset();
+}
+
+/**
+ * @brief 底盘电机无力
+ * 
+ */
+void Chassis_Motor_No_Power(void)
+{
+  for(uint8_t i = 0;i<4;i++)
+  {
+    Chassis_DJI_Motor[i].Set_Out(0);
+  }
+  Chassis_DJI_Motor_Group.Push_Data();
+}
+
+/**
  * @brief 底盘循环函数
  * 
  * @param X 
@@ -116,7 +144,7 @@ void Chassis_Init(void)
  */
 void Chassis_loop(float X,float Y,float Z)
 {
-  Chassis.Set_Target_Speed_XYZ( X, Y, Z);
+  Chassis.Set_Target_Speed_XYZ(X,Y,Z);
   Chassis.Speed_Control();
   Chassis.Push_Control_Value_To_Motor();
 }

@@ -165,6 +165,17 @@ void Chassis_Init(void);
  */
 void Chassis_loop(float X,float Y,float Z);
 
+/**
+ * @brief 重置所有底盘PID的积分项
+ * 
+ */
+void Chassis_PID_Reset(void);
+
+/**
+ * @brief 底盘电机无力
+ * 
+ */
+void Chassis_Motor_No_Power(void);
 
 #ifdef __cplusplus
 }
