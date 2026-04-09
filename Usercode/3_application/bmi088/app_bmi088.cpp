@@ -23,14 +23,16 @@
 #include "task.h"
 #include "MyRTOS.h"
 
+#define biascalibration_target_samples 300 //零飘校准目标次数
+
 /**
  * @brief FreeRTOS相关
  * 
  */
-osThreadId_t imu_calculate_ThreadIdHandle = NULL;
-TaskHandle_t imu_calculate_TaskHandle = NULL;
+osThreadId_t imu_calculate_ThreadIdHandle = NULL;   //RTOS任务句柄
+TaskHandle_t imu_calculate_TaskHandle = NULL;       //RTOS任务通知句柄
 
-//位通知用
+//RTOS位通知用
 #define BMI088_Start_Get_Data   (1U << 0)
 #define BMI088_Get_Acc_OK       (1U << 1)
 #define BMI088_Get_Gyro_OK      (1U << 2)
@@ -76,7 +78,7 @@ float roll = 0,pitch = 0,yaw = 0;
  * @brief 前向轴数据
  * 
  */
-float gimbal_pitch = 0,gimbal_yaw = 0;
+float gimbal_pitch = 0,gimbal_yaw = 0,gimbal_roll = 0;
 
 /**
  * @brief 一些时间
@@ -312,7 +314,7 @@ uint8_t app_bmi088_init_process_loop(void)
     {
         STM32_Printf("wait for bias calibration!\r\n");
 
-        bmi088_biascalibration_start(100);
+        bmi088_biascalibration_start(biascalibration_target_samples);
         bmi088_init_state = init_state_wait_check_data;
 
         last_time4 = HAL_GetTick();
@@ -363,6 +365,7 @@ uint8_t app_bmi088_init_process_loop(void)
             STM32_Printf("bias calibration finish!\r\n");
 
             STM32_Printf("Get %d effective samples use %.2f s\r\n", bmi088_getbiascalibration_current_samples_effective(), (float)(HAL_GetTick() - last_time4)/1000.0f);
+            
             return 1;
         }
     }
@@ -373,14 +376,16 @@ uint8_t app_bmi088_init_process_loop(void)
  * @brief BMI088 1ms周期任务 函数
  * 
  */
-void app_bmi088_1ms_task_get_now_pitch_and_yaw(float *Yaw,float *Picth)
+void app_bmi088_1ms_task_get_now_pitch_yaw_roll(float *Yaw,float *Picth,float *Roll)
 {   
     if(bmi088_init_state == init_state_finish)//完成则进入任务循环
     {
         //ZXY欧拉角转换为云台前向的pitch和yaw
-        euler_extrinsic_ZXY_to_front_yaw_pitch_deg(yaw,roll,pitch,&gimbal_yaw,&gimbal_pitch);
+        euler_extrinsic_ZXY_body_axes_to_front_yaw_pitch_roll_deg(yaw,roll,pitch,0,-1,0,0,0,1,&gimbal_yaw,&gimbal_pitch,&gimbal_roll);
+        //euler_extrinsic_ZXY_to_front_yaw_pitch_deg(yaw,roll,pitch,&gimbal_yaw,&gimbal_pitch);
         *Picth = gimbal_pitch;
         *Yaw = gimbal_yaw;
+        *Roll = gimbal_roll;
     }
 }
 
@@ -392,12 +397,12 @@ void app_bmi088_20ms_task(void)
 {   
     if(bmi088_init_state == init_state_finish)//完成则进入任务循环
     {
-        STM32_Printf("%.8f,%.8f,%.8f,%.8f,%.8f\r\n",roll,pitch,yaw,gimbal_pitch,gimbal_yaw);
+        //STM32_Printf("%.8f,%.8f,%.8f,%.8f,%.8f\r\n",roll,pitch,yaw,gimbal_pitch,gimbal_yaw);
+        STM32_Printf("%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f\r\n",roll,pitch,yaw,gimbal_pitch,gimbal_yaw,q0,q1,q2,q3);
     }
 }
 
 /* BMI088 FreeRTOS相关 ----------------------------------------------------------------*/
-
 
 const osThreadAttr_t imu_calculate_attributes = {
   .name = "imu_calculate",
