@@ -11,8 +11,7 @@
 #include "bsp_can.h"
 #include <cstring>
 #include <stdint.h>
-
-#define motor_gear_ratio_inv 0.06346153846f //减速比倒数 268：17
+#define motor_gear_ratio_inv 0.063432835820f //减速比倒数 268：17
 
 Class_DJI_Motor_Group *Class_DJI_Motor_Group::Group_FIFO0 = nullptr;
 
@@ -33,8 +32,10 @@ void Class_DJI_Motor_Group::Init(CAN_HandleTypeDef *hcan, DJI_Motor_Type_Typedef
 
     Group_FIFO0 = this;
 
+    uint8_t CAN_FIlter_BANK = (hcan->Instance == CAN1) ? 0 : 14;
+
     CAN_Register_RxCallBack_FIFO0_Function(CAN_RxCallback_Entry);
-    CAN_Filter_Mask_Config(hcan, CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x7E0);
+    CAN_Filter_Mask_Config(hcan, CAN_FILTER(CAN_FIlter_BANK) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x7E0);
     CAN_Init(hcan);
 }
 
@@ -104,6 +105,7 @@ void Class_DJI_Motor_Group::CAN_RxCallback_Entry(CAN_Rx_Buffer_t *RxBuffer)
     {
         return;
     }
+
 
     Group_FIFO0->CAN_RxCallback(RxBuffer);
 }
@@ -220,9 +222,9 @@ float Class_DJI_Motor::Get_AngleSpeed(void)
 {
     if(this->Type == DJI_Motor_3508)
     {
-        return Speed_Rpm * 0.1047197533333f * motor_gear_ratio_inv;
+        return Speed_Rpm * 0.006642671f; // 1/60.0 * 2.0 * (3.1415926) * motor_gear_ratio_inv
     }
-    return Speed_Rpm * 0.1047197533333f; // 60.0 * 2.0 * (3.1415926)
+    return Speed_Rpm * 0.1047197533333f; // 1/60.0 * 2.0 * (3.1415926)
 }
 
 /**

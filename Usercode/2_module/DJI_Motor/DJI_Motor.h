@@ -116,10 +116,10 @@ public:
 
     float Get_Angle() const
     {
-        return RawAngle * 0.0459453125f;//* 360.0 / 8192.0 返回度
+        return RawAngle * 0.0439453125;//* 360.0 / 8192.0 返回度
     }
 
-    float Get_AngleSpeed();
+    float Get_AngleSpeed(void);
 
     int16_t Get_Torque_Current() const
     {
