@@ -21,7 +21,7 @@ extern "C" {
 #include "Serial.h"
 
 /*YOUR CODE*/
-extern bool init_finished;
+extern bool Global_Init_Finished;
 
 /* Printf配置------------------------------------------------- */
 #ifndef STM32_PRINTF_USE_USB

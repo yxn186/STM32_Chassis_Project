@@ -20,7 +20,7 @@
 #include "dr16.h"
 
 /*  Task层全局变量 ------------------------------------------------------------*/
-bool init_finished = false;
+bool Global_Init_Finished = false;
 
 /*  Task层数据    ------------------------------------------------------------*/
 
@@ -64,7 +64,7 @@ extern "C" void StartInitTask(void *argument)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartInitTask */
   Chassis_Task_Init();
-  init_finished = true;
+  Global_Init_Finished = true;
   osThreadTerminate(osThreadGetId());
   /* Infinite loop */
   for(;;)

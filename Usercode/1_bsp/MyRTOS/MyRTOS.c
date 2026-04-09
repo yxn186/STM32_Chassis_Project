@@ -8,7 +8,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "MyRTOS.h"
-#include "FreeRTOS.h"
 
 /**
  * @brief 自定义RTOS封装函数 位通知模式 发送通知（中断版）
