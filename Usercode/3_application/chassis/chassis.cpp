@@ -49,8 +49,8 @@ void Chassis_Init(void)
     Chassis.PID_Motor[i].Ki_s = 0;
     Chassis.PID_Motor[i].Kd_s = 1;
 
-    Chassis.PID_Motor[i].ErrorInt_High_s = 500;
-    Chassis.PID_Motor[i].ErrorInt_Low_s = -500;
+    Chassis.PID_Motor[i].ErrorInt_High_s = 0;
+    Chassis.PID_Motor[i].ErrorInt_Low_s = 0;
 
     Chassis.PID_Motor[i].Speed_Target_High = 0;
     Chassis.PID_Motor[i].Speed_Target_Low = 0;
@@ -62,7 +62,7 @@ void Chassis_Init(void)
   //PID参数 底盘
 
   //X
-  Chassis.PID_X.Kp_s = 0;
+  Chassis.PID_X.Kp_s = 1500;
   Chassis.PID_X.Ki_s = 0;
   Chassis.PID_X.Kd_s = 0;
 
@@ -72,11 +72,11 @@ void Chassis_Init(void)
   Chassis.PID_X.Speed_Target_High = 0;
   Chassis.PID_X.Speed_Target_Low = 0;
 
-  Chassis.PID_X.Out_High = 0;
-  Chassis.PID_X.Out_Low  = 0;
+  Chassis.PID_X.Out_High = 500;
+  Chassis.PID_X.Out_Low  = -500;
 
   //Y
-  Chassis.PID_Y.Kp_s = 0;
+  Chassis.PID_Y.Kp_s = 1500;
   Chassis.PID_Y.Ki_s = 0;
   Chassis.PID_Y.Kd_s = 0;
 
@@ -86,11 +86,11 @@ void Chassis_Init(void)
   Chassis.PID_Y.Speed_Target_High = 0;
   Chassis.PID_Y.Speed_Target_Low = 0;
 
-  Chassis.PID_Y.Out_High = 0;
-  Chassis.PID_Y.Out_Low  = 0;
+  Chassis.PID_Y.Out_High = 500;
+  Chassis.PID_Y.Out_Low  = -500;
 
   //Z or W
-  Chassis.PID_W.Kp_s = 0;
+  Chassis.PID_W.Kp_s = 200;
   Chassis.PID_W.Ki_s = 0;
   Chassis.PID_W.Kd_s = 0;
 
@@ -100,11 +100,11 @@ void Chassis_Init(void)
   Chassis.PID_W.Speed_Target_High = 0;
   Chassis.PID_W.Speed_Target_Low = 0;
 
-  Chassis.PID_W.Out_High = 0;
-  Chassis.PID_W.Out_Low  = 0;
+  Chassis.PID_W.Out_High = 500;
+  Chassis.PID_W.Out_Low  = -500;
 
   //经验性比例系数
-  Chassis.MotorCurrent_Out_K_Torque_to_Current = 0;//4500？
+  Chassis.MotorCurrent_Out_K_Torque_to_Current = 4500;//4500？
 }
 
 /**
@@ -136,6 +136,15 @@ void Chassis_Motor_No_Power(void)
 }
 
 /**
+ * @brief 获取底盘当前实际角速度 w
+ * @return float rad/s
+ */
+float Chassis_Get_Current_AngleSpeed_w(void)
+{
+ return Chassis.Current_AngleSpeed_w;
+}
+
+/**
  * @brief 底盘循环函数
  * 
  * @param X 
@@ -147,10 +156,10 @@ void Chassis_loop(float X,float Y,float Z)
   Chassis.Set_Target_Speed_XYZ(X,Y,Z);
 
   //纯速度环
-  Chassis.Speed_Control();
+  //Chassis.Speed_Control();
 
   //速度→力矩环
-  //Chassis.Speed_To_Force_Control();
+  Chassis.Speed_To_Force_Control();
 
   //双环叠加
   //Chassis.Force_Control();

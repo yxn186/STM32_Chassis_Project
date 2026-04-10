@@ -23,7 +23,7 @@
 #include "task.h"
 #include "MyRTOS.h"
 
-#define biascalibration_target_samples 300 //零飘校准目标次数
+#define biascalibration_target_samples 1000 //零飘校准目标次数
 
 /**
  * @brief FreeRTOS相关
@@ -381,11 +381,15 @@ void app_bmi088_1ms_task_get_now_pitch_yaw_roll(float *Yaw,float *Picth,float *R
     if(bmi088_init_state == init_state_finish)//完成则进入任务循环
     {
         //ZXY欧拉角转换为云台前向的pitch和yaw
-        //euler_extrinsic_ZXY_body_axes_to_front_yaw_pitch_roll_deg(yaw,roll,pitch,0,-1,0,0,0,1,&gimbal_yaw,&gimbal_pitch,&gimbal_roll);
+        //euler_extrinsic_ZXY_body_axes_to_front_yaw_pitch_roll_deg(yaw,roll,pitch,1,0,0,0,0,1,&gimbal_yaw,&gimbal_pitch,&gimbal_roll);
         //euler_extrinsic_ZXY_to_front_yaw_pitch_deg(yaw,roll,pitch,&gimbal_yaw,&gimbal_pitch);
-        *Picth = gimbal_pitch;
-        *Yaw = gimbal_yaw;
-        *Roll = gimbal_roll;
+        //bmi088_mahony_zyx
+        // *Picth = gimbal_pitch;
+        // *Yaw = gimbal_yaw;
+        // *Roll = gimbal_roll;
+        *Picth = pitch;
+        *Yaw = yaw;
+        *Roll = roll;
     }
 }
 
@@ -398,7 +402,7 @@ void app_bmi088_20ms_task(void)
     if(bmi088_init_state == init_state_finish)//完成则进入任务循环
     {
         //STM32_Printf("%.8f,%.8f,%.8f,%.8f,%.8f\r\n",roll,pitch,yaw,gimbal_pitch,gimbal_yaw);
-        STM32_Printf("%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f\r\n",roll,pitch,yaw,gimbal_pitch,gimbal_yaw,q0,q1,q2,q3);
+        //STM32_Printf("%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f\r\n",roll,pitch,yaw,gimbal_pitch,gimbal_yaw,q0,q1,q2,q3);
     }
 }
 

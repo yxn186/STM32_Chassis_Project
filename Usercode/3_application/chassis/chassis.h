@@ -31,8 +31,8 @@ class Class_Chassis
   //底盘数据
   float wheel_s = 0.0815;                       //轮半径
   float wheel_s_inv = 12.269938650f;            //轮半径倒数
-  float r = 0.1125;                             //底盘半径
-  float r_inv = 8.8888888888888f;                         //底盘半径倒数
+  float r = 0.2125;                             //底盘半径
+  float r_inv = 4.705882352941176f;             //底盘半径倒数
   float motor_gear_ratio = 15.764705882453f;    //减速比
   float motor_gear_ratio_inv = 0.06346153846f;  //减速比倒数
 
@@ -74,6 +74,11 @@ class Class_Chassis
   Class_PID PID_W;
 
   float MotorCurrent_Out_K_Torque_to_Current;//经验性比例系数
+
+  float Get_Current_AngleSpeed_w(void)
+  {
+    return PID_W.Speed_States.Current;
+  }
 
   /**
   * @brief 底盘电机目标角速度计算
@@ -176,6 +181,14 @@ void Chassis_PID_Reset(void);
  * 
  */
 void Chassis_Motor_No_Power(void);
+
+/**
+ * @brief 获取底盘当前实际角速度 w
+ * @return float rad/s
+ */
+float Chassis_Get_Current_AngleSpeed_w(void);
+
+
 
 #ifdef __cplusplus
 }
