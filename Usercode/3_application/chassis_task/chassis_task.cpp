@@ -19,6 +19,8 @@
 #include "MyMath.h"
 #include "Chassis.h"
 #include "dr16.h"
+#include "app_bmi088.h"
+#include "bmi088_math.h"
 
 /*  Task层全局变量 ------------------------------------------------------------*/
 bool Global_Init_Finished = false;
@@ -31,6 +33,7 @@ typedef enum
 {
   Normal_Running_Mode = 0,
   No_Power_Mode,
+  Little_Top_Mode,
   Error_Mode,
 
 } Chassis_State_e;
@@ -83,13 +86,17 @@ extern "C" void StartInitTask(void *argument)
  /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN StartInitTask */
-  Chassis_Task_Init();
-  Global_Init_Finished = true;
-  osThreadTerminate(osThreadGetId());
+  app_bmi088_init();
+  
   /* Infinite loop */
   for(;;)
   {
-    ;
+    if(app_bmi088_init_process_loop())
+    {
+      Chassis_Task_Init();
+      Global_Init_Finished = true;
+      osThreadTerminate(osThreadGetId());
+    }
   }
   /* USER CODE END StartInitTask */
 }
@@ -168,7 +175,13 @@ void Chassis_Control(void)
     }
     case Error_Mode:
     {
-      Chassis_Motor_No_Power();
+      Chassis_loop(0, 0,0);
+      //Chassis_Motor_No_Power();
+      break;
+    }
+    case Little_Top_Mode:
+    {
+      Chassis_loop(0, 0,Chassis_Remote_Data.CHASSIS_VZ_MAX);
       break;
     }
     default:
@@ -205,7 +218,7 @@ void Chassis_DR16_Get_Data(void)
 
   Chassis_Remote_Data.X = DR16.Get_Left_X();
   Chassis_Remote_Data.Y = DR16.Get_Left_Y();
-  Chassis_Remote_Data.Z = DR16.Get_Right_X();
+  Chassis_Remote_Data.Z = -DR16.Get_Right_X();
 }
 
 /**
@@ -324,6 +337,10 @@ void Chassis_DR16_Switch_Detect(void)
   else if(Left_Mode == 1 && Right_Mode == 1)
   {
     Chassis_State = No_Power_Mode;
+  }
+  else if(Left_Mode == 1 && Right_Mode == 2)
+  {
+    Chassis_State = Little_Top_Mode;
   }
   else
   {

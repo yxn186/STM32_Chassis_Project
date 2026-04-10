@@ -31,6 +31,7 @@ static float bmi088_roll_angle_deg        = 0.0f;
 static float bmi088_pitch_angle_deg       = 0.0f;
 static float bmi088_yaw_angle_deg         = 0.0f;
 static float bmi088_real_pitch_angle_deg  = 0.0f;
+static float bmi088_yaw_angle_speed_rads  = 0.0f;
 
 
 /* 用于“启动阶段 Alpha 强一点”的计时 已弃用 */
@@ -302,6 +303,9 @@ void bmi088_mahony(int16_t gyro_raw_x,int16_t gyro_raw_y,int16_t gyro_raw_z,int1
     gyro_dps_x -= bmi088_biascalibration.gyro_bias_x;
     gyro_dps_y -= bmi088_biascalibration.gyro_bias_y;
     gyro_dps_z -= bmi088_biascalibration.gyro_bias_z;
+
+    //保存Yaw角速度
+    bmi088_yaw_angle_speed_rads = gyro_dps_z * DEG2RAD;
 
     acc_g_x -= bmi088_biascalibration.acc_bias_x;
     acc_g_y -= bmi088_biascalibration.acc_bias_y;
@@ -612,6 +616,11 @@ float BMI088_GetYawDeg(void)
 float BMI088_GetRealPitchDeg(void)     
 { 
     return bmi088_real_pitch_angle_deg; 
+}
+
+float BMI088_GetYawAngleSpeed(void)    
+{ 
+    return bmi088_yaw_angle_speed_rads; 
 }
 
 uint8_t bmi088_get_biascalibration_finish_flag(void)  

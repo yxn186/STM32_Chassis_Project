@@ -37,26 +37,26 @@ void Chassis_Init(void)
 {
   //电机设置
   Chassis_DJI_Motor_Group.Init(&hcan1, DJI_Motor_3508);
-  Chassis_DJI_Motor[0].Init(DJI_Motor_3508, 0, &Chassis_DJI_Motor_Group);
-  Chassis_DJI_Motor[1].Init(DJI_Motor_3508, 0, &Chassis_DJI_Motor_Group);
-  Chassis_DJI_Motor[2].Init(DJI_Motor_3508, 0, &Chassis_DJI_Motor_Group);
-  Chassis_DJI_Motor[3].Init(DJI_Motor_3508, 0, &Chassis_DJI_Motor_Group);
+  Chassis_DJI_Motor[0].Init(DJI_Motor_3508, 4, &Chassis_DJI_Motor_Group);
+  Chassis_DJI_Motor[1].Init(DJI_Motor_3508, 1, &Chassis_DJI_Motor_Group);
+  Chassis_DJI_Motor[2].Init(DJI_Motor_3508, 2, &Chassis_DJI_Motor_Group);
+  Chassis_DJI_Motor[3].Init(DJI_Motor_3508, 3, &Chassis_DJI_Motor_Group);
 
   //电机PID参数
   for(uint8_t i = 0;i < 4;i++)
   {
-    Chassis.PID_Motor[i].Kp_s = 0;
+    Chassis.PID_Motor[i].Kp_s = 3500;
     Chassis.PID_Motor[i].Ki_s = 0;
-    Chassis.PID_Motor[i].Kd_s = 0;
+    Chassis.PID_Motor[i].Kd_s = 1;
 
-    Chassis.PID_Motor[i].ErrorInt_High_s = 0;
-    Chassis.PID_Motor[i].ErrorInt_Low_s = 0;
+    Chassis.PID_Motor[i].ErrorInt_High_s = 500;
+    Chassis.PID_Motor[i].ErrorInt_Low_s = -500;
 
     Chassis.PID_Motor[i].Speed_Target_High = 0;
     Chassis.PID_Motor[i].Speed_Target_Low = 0;
 
-    Chassis.PID_Motor[i].Out_High = 0;
-    Chassis.PID_Motor[i].Out_Low  = 0;
+    Chassis.PID_Motor[i].Out_High = 9000;
+    Chassis.PID_Motor[i].Out_Low  = -9000;
   }
 
   //PID参数 底盘
@@ -104,7 +104,7 @@ void Chassis_Init(void)
   Chassis.PID_W.Out_Low  = 0;
 
   //经验性比例系数
-  Chassis.MotorCurrent_Out_K_Torque_to_Current = 0;
+  Chassis.MotorCurrent_Out_K_Torque_to_Current = 0;//4500？
 }
 
 /**
@@ -145,7 +145,16 @@ void Chassis_Motor_No_Power(void)
 void Chassis_loop(float X,float Y,float Z)
 {
   Chassis.Set_Target_Speed_XYZ(X,Y,Z);
+
+  //纯速度环
   Chassis.Speed_Control();
+
+  //速度→力矩环
+  //Chassis.Speed_To_Force_Control();
+
+  //双环叠加
+  //Chassis.Force_Control();
+
   Chassis.Push_Control_Value_To_Motor();
 }
 

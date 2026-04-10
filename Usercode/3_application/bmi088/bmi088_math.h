@@ -29,6 +29,7 @@ float BMI088_GetRollDeg(void);
 float BMI088_GetPitchDeg(void);
 float BMI088_GetYawDeg(void);
 float BMI088_GetRealPitchDeg(void);
+float BMI088_GetYawAngleSpeed(void);
 
 uint8_t BMI088_IsBiasCalibrated(void);
 
