@@ -20,6 +20,7 @@
 #include "MyMath.h"
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "task.h"
 #include "MyRTOS.h"
 
@@ -479,7 +480,7 @@ void bmi088_calculate_task(void *argument)
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-    if(GPIO_Pin == GPIO_PIN_0)//acc数据准备好中断
+    if(GPIO_Pin == GPIO_PIN_5)//gyro数据准备好中断
     {
         if(bmi088_init_state == init_state_finish)
         {

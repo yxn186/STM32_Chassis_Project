@@ -52,6 +52,14 @@ void Chassis_Init(void)
     Chassis.PID_Motor[i].ErrorInt_High_s = 0;
     Chassis.PID_Motor[i].ErrorInt_Low_s = 0;
 
+    Chassis.PID_Motor[i].Integral_Stop_Near_Zero_Enable_s = 1;
+    Chassis.PID_Motor[i].Integral_Stop_Target_Abs_Threshold_s = 0.5f;
+    Chassis.PID_Motor[i].Integral_Stop_Error_Abs_Threshold_s = 0.5f;
+
+    Chassis.PID_Motor[i].Integral_Stop_Near_Zero_Enable_a = 0;
+    Chassis.PID_Motor[i].Integral_Stop_Target_Abs_Threshold_a = 0.0f;
+    Chassis.PID_Motor[i].Integral_Stop_Error_Abs_Threshold_a = 0.0f;
+
     Chassis.PID_Motor[i].Speed_Target_High = 0;
     Chassis.PID_Motor[i].Speed_Target_Low = 0;
 
@@ -63,11 +71,19 @@ void Chassis_Init(void)
 
   //X
   Chassis.PID_X.Kp_s = 1500;
-  Chassis.PID_X.Ki_s = 0;
+  Chassis.PID_X.Ki_s = 3;
   Chassis.PID_X.Kd_s = 0;
 
-  Chassis.PID_X.ErrorInt_High_s = 0;
-  Chassis.PID_X.ErrorInt_Low_s = 0;
+  Chassis.PID_X.ErrorInt_High_s = 100;
+  Chassis.PID_X.ErrorInt_Low_s = -100;
+
+  Chassis.PID_X.Integral_Stop_Near_Zero_Enable_s = 1;
+  Chassis.PID_X.Integral_Stop_Target_Abs_Threshold_s = 0.02f;
+  Chassis.PID_X.Integral_Stop_Error_Abs_Threshold_s = 0.02f;
+
+  Chassis.PID_X.Integral_Stop_Near_Zero_Enable_a = 0;
+  Chassis.PID_X.Integral_Stop_Target_Abs_Threshold_a = 0.0f;
+  Chassis.PID_X.Integral_Stop_Error_Abs_Threshold_a = 0.0f;
 
   Chassis.PID_X.Speed_Target_High = 0;
   Chassis.PID_X.Speed_Target_Low = 0;
@@ -77,11 +93,19 @@ void Chassis_Init(void)
 
   //Y
   Chassis.PID_Y.Kp_s = 1500;
-  Chassis.PID_Y.Ki_s = 0;
+  Chassis.PID_Y.Ki_s = 3;
   Chassis.PID_Y.Kd_s = 0;
 
-  Chassis.PID_Y.ErrorInt_High_s = 0;
-  Chassis.PID_Y.ErrorInt_Low_s = 0;
+  Chassis.PID_Y.ErrorInt_High_s = 100;
+  Chassis.PID_Y.ErrorInt_Low_s = -100;
+
+  Chassis.PID_Y.Integral_Stop_Near_Zero_Enable_s = 1;
+  Chassis.PID_Y.Integral_Stop_Target_Abs_Threshold_s = 0.02f;
+  Chassis.PID_Y.Integral_Stop_Error_Abs_Threshold_s = 0.02f;
+
+  Chassis.PID_Y.Integral_Stop_Near_Zero_Enable_a = 0;
+  Chassis.PID_Y.Integral_Stop_Target_Abs_Threshold_a = 0.0f;
+  Chassis.PID_Y.Integral_Stop_Error_Abs_Threshold_a = 0.0f;
 
   Chassis.PID_Y.Speed_Target_High = 0;
   Chassis.PID_Y.Speed_Target_Low = 0;
@@ -91,11 +115,19 @@ void Chassis_Init(void)
 
   //Z or W
   Chassis.PID_W.Kp_s = 200;
-  Chassis.PID_W.Ki_s = 0;
+  Chassis.PID_W.Ki_s = 0.15;
   Chassis.PID_W.Kd_s = 0;
 
-  Chassis.PID_W.ErrorInt_High_s = 0;
-  Chassis.PID_W.ErrorInt_Low_s = 0;
+  Chassis.PID_W.ErrorInt_High_s = 80;
+  Chassis.PID_W.ErrorInt_Low_s = -80;
+
+  Chassis.PID_W.Integral_Stop_Near_Zero_Enable_s = 1;
+  Chassis.PID_W.Integral_Stop_Target_Abs_Threshold_s = 0.05f;
+  Chassis.PID_W.Integral_Stop_Error_Abs_Threshold_s = 0.05f;
+
+  Chassis.PID_W.Integral_Stop_Near_Zero_Enable_a = 0;
+  Chassis.PID_W.Integral_Stop_Target_Abs_Threshold_a = 0.0f;
+  Chassis.PID_W.Integral_Stop_Error_Abs_Threshold_a = 0.0f;
 
   Chassis.PID_W.Speed_Target_High = 0;
   Chassis.PID_W.Speed_Target_Low = 0;

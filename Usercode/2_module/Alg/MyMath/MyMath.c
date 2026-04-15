@@ -8,3 +8,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "MyMath.h"
+
+float MyMath_Abs(float value)
+{
+  if (value < 0.0f)
+  {
+    return -value;
+  }
+
+  return value;
+}

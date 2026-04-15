@@ -22,13 +22,24 @@
 #include "app_bmi088.h"
 #include "bmi088_math.h"
 #include "math.h"
+#include "SlopePlaning.h"
 
 /*  Task层全局变量 ------------------------------------------------------------*/
 bool Global_Init_Finished = false;
 
+  volatile uint32_t main_task_tick = 0;
+  volatile uint32_t main_task_count = 0;
 /*  Task层数据    ------------------------------------------------------------*/
 
+Class_SlopePlaning SlopePlaning_X;
+Class_SlopePlaning SlopePlaning_Y;
+Class_SlopePlaning SlopePlaning_Z;
 Class_DR16 DR16;
+
+static constexpr float CHASSIS_SLOPE_DT = 0.001f;
+static constexpr float CHASSIS_SLOPE_ACCEL_X = 6.0f;
+static constexpr float CHASSIS_SLOPE_ACCEL_Y = 6.0f;
+static constexpr float CHASSIS_SLOPE_ACCEL_Z = 30.0f;
 
 typedef enum
 {
@@ -53,11 +64,11 @@ typedef struct
   // 单位: X/Y 为 m/s, Z 为 rad/s
   float CHASSIS_VX_MAX = 1.0f;    // 前后最大线速度 (m/s)
   float CHASSIS_VY_MAX = 1.0f;    // 左右最大线速度 (m/s)
-  float CHASSIS_VZ_MAX = 3.0f;    // 最大旋转角速度 (rad/s)
+  float CHASSIS_VZ_MAX = 6.0f;    // 最大旋转角速度 (rad/s)
   
-  float CHASSIS_VX_MAX_HIGH = 2.0f;    // 前后最大线速度 (m/s)
-  float CHASSIS_VY_MAX_HIGH = 2.0f;    // 左右最大线速度 (m/s)
-  float CHASSIS_VZ_MAX_HIGH = 6.0f;    // 最大旋转角速度 (rad/s)
+  float CHASSIS_VX_MAX_HIGH = 3.0f;    // 前后最大线速度 (m/s)
+  float CHASSIS_VY_MAX_HIGH = 3.0f;    // 左右最大线速度 (m/s)
+  float CHASSIS_VZ_MAX_HIGH = 15.0f;    // 最大旋转角速度 (rad/s)
 } Chassis_Remote_Data_t;
 
 Chassis_Remote_Data_t Chassis_Remote_Data;
@@ -118,6 +129,38 @@ static void Chassis_Vector_Gimbal_To_Chassis(float vx_g, float vy_g, float theta
 static float Little_Top_Follow_Angle_Rad = 0.0f;
 
 /**
+ * @brief IMU 陀螺仪在线温漂修正量（rad/s）
+ * 通过轮式里程计做参考，配合 innovation-gated 滤波估计
+ */
+static float Little_Top_IMU_Bias_Correction = 0.0f;
+
+/**
+ * @brief Innovation-gated 自适应偏差更新
+ * 
+ * @param imu_wz    IMU 角速度 (rad/s)
+ * @param wheel_wz  轮式里程计角速度 (rad/s)
+ * @param tau       基础时间常数 (s)，越小收敛越快
+ * @param sigma     正常噪声阈值 (rad/s)，超过此值视为轮滑异常
+ * 
+ * 原理：innovation = (wheel - imu) - bias_estimate
+ *       gate = σ² / (σ² + innovation²)
+ *       innovation 小 → 正常更新；innovation 大（轮滑）→ 几乎冻结
+ */
+static void IMU_Bias_Gated_Update(float imu_wz, float wheel_wz, float tau, float sigma)
+{
+  float innovation = (wheel_wz - imu_wz) - Little_Top_IMU_Bias_Correction;
+  float sigma_sq = sigma * sigma;
+  float gate = sigma_sq / (sigma_sq + innovation * innovation);
+
+  Little_Top_IMU_Bias_Correction += innovation * gate * (0.001f / tau);
+
+  // 钳位到物理合理范围（BMI088 温漂通常 < 0.05 rad/s ≈ 3°/s）
+  const float BIAS_MAX = 0.05f;
+  if (Little_Top_IMU_Bias_Correction > BIAS_MAX)  Little_Top_IMU_Bias_Correction = BIAS_MAX;
+  if (Little_Top_IMU_Bias_Correction < -BIAS_MAX) Little_Top_IMU_Bias_Correction = -BIAS_MAX;
+}
+
+/**
  * @brief 弧度包角到 [-pi, pi]
  */
 static float Wrap_Rad(float angle_rad)
@@ -131,22 +174,37 @@ static float Wrap_Rad(float angle_rad)
   return angle_rad;
 }
 
+static void Chassis_SlopePlaning_Reset(float Reset_Value)
+{
+  SlopePlaning_X.Reset(Reset_Value);
+  SlopePlaning_Y.Reset(Reset_Value);
+  SlopePlaning_Z.Reset(Reset_Value);
+
+  Vx = Reset_Value;
+  Vy = Reset_Value;
+  Vz = Reset_Value;
+}
+
+static void Chassis_SlopePlaning_Calculate(float Target_Vx, float Target_Vy, float Target_Vz)
+{
+  SlopePlaning_X.Set_Target(Target_Vx);
+  SlopePlaning_Y.Set_Target(Target_Vy);
+  SlopePlaning_Z.Set_Target(Target_Vz);
+
+  SlopePlaning_X.Calculate_Loop();
+  SlopePlaning_Y.Calculate_Loop();
+  SlopePlaning_Z.Calculate_Loop();
+
+  Vx = SlopePlaning_X.Get_After_Target();
+  Vy = SlopePlaning_Y.Get_After_Target();
+  Vz = SlopePlaning_Z.Get_After_Target();
+}
+
 /*  Task层初始化函数    ------------------------------------------------------*/
 
 
 /*  Task层自定义回调函数类型 --------------------------------------------------*/
 
-void USB_CallBack(uint8_t *Buffer, uint16_t Length)
-{
-  if(Length == 0)
-  {
-    return;
-  }
-  
-  //数据处理
-  
-
-}
 
 /*  Task层FreeRTOS函数 任务函数 -----------------------------------------------*/
 
@@ -178,8 +236,11 @@ extern "C" void Data_ptintf_task(void *argument)
   {
     //待加数据输出
 
-    //顺便100ms检测
-    DR16.Task_100ms_Alive_Detection();
+    if(Global_Init_Finished)
+    {
+      //顺便100ms检测
+      R16.Task_100ms_Alive_Detection();
+    }
     osDelay(100);
   }
   /* USER CODE END Data_ptintf_task */
@@ -188,20 +249,29 @@ extern "C" void Data_ptintf_task(void *argument)
 extern "C" void main_Task_1ms(void *argument)
 {
   /* USER CODE BEGIN main_Task_1ms */
+  const uint32_t period_ticks = 1U;              // 1 tick，前提是你的RTOS tick就是1ms
+  uint32_t next_tick = osKernelGetTickCount();   // 记录下一次唤醒基准
   /* Infinite loop */
   for(;;)
   {
-    app_bmi088_1ms_task_get_now_pitch_yaw_roll(&Yaw, &Picth, &Roll);
-    DR16.Task_1ms_Data_Calculate();
+    if(Global_Init_Finished)
+    {
+      main_task_tick = osKernelGetTickCount();
+      main_task_count++;
 
-    Chassis_DR16_Get_Data();
-    Chassis_DR16_Switch_Detect();
+      app_bmi088_1ms_task_get_now_pitch_yaw_roll(&Yaw, &Picth, &Roll);
+      DR16.Task_1ms_Data_Calculate();
 
-    Chassis_Remote_Calculate();
+      Chassis_DR16_Get_Data();
+      Chassis_DR16_Switch_Detect();
 
-    Chassis_Control();
+      Chassis_Remote_Calculate();
 
-    osDelay(1);
+      Chassis_Control();
+    }
+    next_tick += period_ticks;
+    osDelayUntil(next_tick);
+    //osDelay(1);
   }
   /* USER CODE END main_Task_1ms */
 }
@@ -216,6 +286,11 @@ void Chassis_Task_Init(void)
 {
   Chassis_Init();
   DR16.Init(&huart3);
+
+  SlopePlaning_X.Init(CHASSIS_SLOPE_ACCEL_X, CHASSIS_SLOPE_ACCEL_X, CHASSIS_SLOPE_DT, SlopePlaning_TARGET);
+  SlopePlaning_Y.Init(CHASSIS_SLOPE_ACCEL_Y, CHASSIS_SLOPE_ACCEL_Y, CHASSIS_SLOPE_DT, SlopePlaning_TARGET);
+  SlopePlaning_Z.Init(CHASSIS_SLOPE_ACCEL_Z, CHASSIS_SLOPE_ACCEL_Z, CHASSIS_SLOPE_DT, SlopePlaning_TARGET);
+  Chassis_SlopePlaning_Reset(0.0f);
 }
 
 /**
@@ -231,66 +306,67 @@ void Chassis_Control(void)
   float wz_cmd = 0.0f;
   float theta_rad = 0.0f;
 
+  if (Last_State != Chassis_State)
+  {
+    // 状态切换时统一清空控制残留，避免上一模式的积分项和规划值带入当前模式
+    Chassis_PID_Reset();
+    Chassis_SlopePlaning_Reset(0.0f);
+  }
+
+  bool last_state_is_little_top = (Last_State == Little_Top_Mode_Low || Last_State == Little_Top_Mode_High);
+
   switch (Chassis_State)
   {
     case Normal_Running_Mode_Low:
     {
-      // 从无力/错误模式切换到运行模式时，重置所有PID积分项，防止积分残留导致输出突变
-      if (Last_State != Normal_Running_Mode_Low)
-      {
-        Chassis_PID_Reset();
-      }
+      // 背景 bias 学习：正常行驶时轮式里程计可靠，用较快收敛预热 bias 估计
+      // 这样切换到小陀螺时已有准确的初始 bias，大幅减少进入旋转后的漂移
+      IMU_Bias_Gated_Update(BMI088_GetYawAngleSpeed(),
+                            Chassis_Get_Current_AngleSpeed_w(),
+                            5.0f,     // τ = 5s，非旋转时加速收敛
+                            0.05f);   // σ = 0.05 rad/s，正常行驶允许稍大误差
+
       Chassis_loop(Vx, Vy, Vz);
       break;
     }
     case Normal_Running_Mode_High:
     {
-      if (Last_State != Normal_Running_Mode_High)
-      {
-        Chassis_PID_Reset();
-      }
+      // 背景 bias 学习（同上）
+      IMU_Bias_Gated_Update(BMI088_GetYawAngleSpeed(),
+                            Chassis_Get_Current_AngleSpeed_w(),
+                            5.0f, 0.05f);
+
       Chassis_loop(Vx, Vy, Vz);
       break;
     }
     case No_Power_Mode:
     {
-      if (Last_State != No_Power_Mode)
-      {
-        Chassis_PID_Reset();
-      }
       Chassis_Motor_No_Power();
       break;
     }
     case Error_Mode:
     {
-      if (Last_State != Error_Mode)
-      {
-        Chassis_PID_Reset();
-      }
       Chassis_loop(0, 0,0);
       //Chassis_Motor_No_Power();
       break;
     }
     case Little_Top_Mode_Low:
     {
-      if (Last_State != Little_Top_Mode_Low)
+      if (!last_state_is_little_top)
       {
-        Chassis_PID_Reset();
         Little_Top_Follow_Angle_Rad = 0.0f;   // 进入小陀螺时清零
       }
 
       // 小陀螺角速度命令（正值=逆时针，负值=顺时针，按需取负）
       wz_cmd = -Chassis_Remote_Data.CHASSIS_VZ_MAX;
 
-      // ① 两路角速度测量
-      //    IMU body-Z：噪声低、无轮滑，但存在随温升变化的 gyro bias
-      //    轮式里程计：(w0+w1+w2+w3)/4，无温漂，但有轮滑/量化误差
+      // ① 两路角速度测量 + innovation-gated 自适应偏差修正
       float imu_wz   = BMI088_GetYawAngleSpeed();            // rad/s，已减去上电静态 bias
       float wheel_wz = Chassis_Get_Current_AngleSpeed_w();   // rad/s，四轮正运动学求和
 
-      // ② 在线温漂估计：低通（τ ≈ 30 s）追踪 IMU 的热偏移
-      //    轮式里程计作为无温漂“漂移参考”，缓慢修正 IMU bias
-      Little_Top_IMU_Bias_Correction += (wheel_wz - imu_wz) * (0.001f / 30.0f);
+      // ② 自适应温漂估计（门控滤波：轮滑大时自动冻结，避免轮滑污染 bias）
+      //    τ=20s, σ=0.03 rad/s（旋转时用保守参数，防止轮滑误差带偏 bias）
+      IMU_Bias_Gated_Update(imu_wz, wheel_wz, 20.0f, 0.03f);
 
       // ③ 用修正后的 IMU 积分相对转角（高频精度 + 长期稳定）
       float corrected_wz = imu_wz + Little_Top_IMU_Bias_Correction;
@@ -308,9 +384,8 @@ void Chassis_Control(void)
     }
     case Little_Top_Mode_High:
     {
-      if (Last_State != Little_Top_Mode_High)
+      if (!last_state_is_little_top)
       {
-        Chassis_PID_Reset();
         Little_Top_Follow_Angle_Rad = 0.0f;   // 高速进入时同样清零，重新从当前朝向积分
       }
 
@@ -321,7 +396,8 @@ void Chassis_Control(void)
       float imu_wz   = BMI088_GetYawAngleSpeed();
       float wheel_wz = Chassis_Get_Current_AngleSpeed_w();
 
-      Little_Top_IMU_Bias_Correction += (wheel_wz - imu_wz) * (0.001f / 30.0f);
+      // 高速旋转用更保守的 σ（轮滑更严重），τ 同样 20s
+      IMU_Bias_Gated_Update(imu_wz, wheel_wz, 20.0f, 0.02f);
 
       float corrected_wz = imu_wz + Little_Top_IMU_Bias_Correction;
       Little_Top_Follow_Angle_Rad += corrected_wz * 0.001f;
@@ -350,18 +426,24 @@ void Chassis_Control(void)
  */
 void Chassis_Remote_Calculate(void)
 {
+  float Target_Vx = 0.0f;
+  float Target_Vy = 0.0f;
+  float Target_Vz = 0.0f;
+
   if(Chassis_State == Normal_Running_Mode_High || Chassis_State == Little_Top_Mode_High)
   {
-    Vx = Chassis_Remote_Data.X * Chassis_Remote_Data.CHASSIS_VX_MAX_HIGH;
-    Vy = Chassis_Remote_Data.Y * Chassis_Remote_Data.CHASSIS_VY_MAX_HIGH;
-    Vz = Chassis_Remote_Data.Z * Chassis_Remote_Data.CHASSIS_VZ_MAX_HIGH;
+    Target_Vx = Chassis_Remote_Data.X * Chassis_Remote_Data.CHASSIS_VX_MAX_HIGH;
+    Target_Vy = Chassis_Remote_Data.Y * Chassis_Remote_Data.CHASSIS_VY_MAX_HIGH;
+    Target_Vz = Chassis_Remote_Data.Z * Chassis_Remote_Data.CHASSIS_VZ_MAX_HIGH;
   }
   else if(Chassis_State == Normal_Running_Mode_Low || Chassis_State == Little_Top_Mode_Low)
   {
-    Vx = Chassis_Remote_Data.X * Chassis_Remote_Data.CHASSIS_VX_MAX;
-    Vy = Chassis_Remote_Data.Y * Chassis_Remote_Data.CHASSIS_VY_MAX;
-    Vz = Chassis_Remote_Data.Z * Chassis_Remote_Data.CHASSIS_VZ_MAX;
-  } 
+    Target_Vx = Chassis_Remote_Data.X * Chassis_Remote_Data.CHASSIS_VX_MAX;
+    Target_Vy = Chassis_Remote_Data.Y * Chassis_Remote_Data.CHASSIS_VY_MAX;
+    Target_Vz = Chassis_Remote_Data.Z * Chassis_Remote_Data.CHASSIS_VZ_MAX;
+  }
+
+  Chassis_SlopePlaning_Calculate(Target_Vx, Target_Vy, Target_Vz);
 }
 
 /**
@@ -390,6 +472,13 @@ void Chassis_DR16_Get_Data(void)
  */
 void Chassis_DR16_Switch_Detect(void)
 {
+  // 遥控器离线时，强制无力模式，防止底盘失控
+  if (DR16.Get_Status() != DR16_Status_ENABLE)
+  {
+    Chassis_State = No_Power_Mode;
+    return;
+  }
+
   //上3中2下1
   uint8_t Left_Mode = 0;
   uint8_t Right_Mode = 0;

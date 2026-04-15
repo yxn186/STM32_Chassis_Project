@@ -28,6 +28,8 @@ extern "C" {
 #define SQRT2_OVER_2 0.70710678f //二分之根号二
 #define SQRT2_OVER_4 0.35355339f //四分之根号二
 
+float MyMath_Abs(float value);
+
 
 #ifdef __cplusplus
 }
