@@ -248,46 +248,46 @@ void Class_DR16::Judge_Key(Enum_DR16_Key_Status *Key, uint8_t Status, uint8_t Pr
     // 带触发的判断
     switch (Pre_Status)
     {
-    case (DR16_KEY_FREE):
-    {
-        switch (Status)
-        {
         case (DR16_KEY_FREE):
         {
-            *Key = DR16_Key_Status_FREE;
+            switch (Status)
+            {
+            case (DR16_KEY_FREE):
+            {
+                *Key = DR16_Key_Status_FREE;
+
+                break;
+            }
+            case (DR16_KEY_PRESSED):
+            {
+                *Key = DR16_Key_Status_TRIG_FREE_PRESSED;
+
+                break;
+            }
+            }
 
             break;
         }
         case (DR16_KEY_PRESSED):
         {
-            *Key = DR16_Key_Status_TRIG_FREE_PRESSED;
+            switch (Status)
+            {
+                case (DR16_KEY_FREE):
+                {
+                    *Key = DR16_Key_Status_TRIG_PRESSED_FREE;
+
+                    break;
+                }
+                case (DR16_KEY_PRESSED):
+                {
+                    *Key = DR16_Key_Status_PRESSED;
+
+                    break;
+                }
+            }
 
             break;
         }
-        }
-
-        break;
-    }
-    case (DR16_KEY_PRESSED):
-    {
-        switch (Status)
-        {
-        case (DR16_KEY_FREE):
-        {
-            *Key = DR16_Key_Status_TRIG_PRESSED_FREE;
-
-            break;
-        }
-        case (DR16_KEY_PRESSED):
-        {
-            *Key = DR16_Key_Status_PRESSED;
-
-            break;
-        }
-        }
-
-        break;
-    }
     }
 }
 

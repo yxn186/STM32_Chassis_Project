@@ -23,12 +23,15 @@
 #include "bmi088_math.h"
 #include "math.h"
 #include "SlopePlaning.h"
+#include "DWT.h"
 
 /*  Task层全局变量 ------------------------------------------------------------*/
 bool Global_Init_Finished = false;
 
   volatile uint32_t main_task_tick = 0;
   volatile uint32_t main_task_count = 0;
+  volatile uint32_t main_task_period_us = 0;   // 实际任务周期 (us)
+  volatile uint32_t main_task_exec_us = 0;     // 任务单次执行耗时 (us)
 /*  Task层数据    ------------------------------------------------------------*/
 
 Class_SlopePlaning SlopePlaning_X;
@@ -91,16 +94,6 @@ float Yaw, Picth, Roll;
  * 先从 0 开始调通，再慢慢加
  */
 static float Little_Top_Angle_FeedForward_K = 0.005f;
-
-/**
- * @brief 获取云台yaw相对底盘的夹角（单位：rad）
- * @note 你必须把这里替换成你自己的真实反馈接口
- */
-static float Get_Gimbal_Yaw_Relative_Chassis_Rad(void)
-{
-  // ---------------------------
-  return Yaw * 0.01745329251994f;
-}
 
 /**
  * @brief 将云台坐标系下的速度矢量，变换到底盘坐标系
@@ -239,7 +232,7 @@ extern "C" void Data_ptintf_task(void *argument)
     if(Global_Init_Finished)
     {
       //顺便100ms检测
-      R16.Task_100ms_Alive_Detection();
+      DR16.Task_100ms_Alive_Detection();
     }
     osDelay(100);
   }
@@ -251,15 +244,25 @@ extern "C" void main_Task_1ms(void *argument)
   /* USER CODE BEGIN main_Task_1ms */
   const uint32_t period_ticks = 1U;              // 1 tick，前提是你的RTOS tick就是1ms
   uint32_t next_tick = osKernelGetTickCount();   // 记录下一次唤醒基准
+  
   /* Infinite loop */
   for(;;)
   {
     if(Global_Init_Finished)
     {
+      static uint64_t last_enter_us = 0;
+      uint64_t enter_us = DWT_GetUs();
+      if (last_enter_us != 0U)
+      {
+        main_task_period_us = (uint32_t)(enter_us - last_enter_us);
+      }
+      last_enter_us = enter_us;
+
       main_task_tick = osKernelGetTickCount();
       main_task_count++;
 
       app_bmi088_1ms_task_get_now_pitch_yaw_roll(&Yaw, &Picth, &Roll);
+
       DR16.Task_1ms_Data_Calculate();
 
       Chassis_DR16_Get_Data();
@@ -268,7 +271,10 @@ extern "C" void main_Task_1ms(void *argument)
       Chassis_Remote_Calculate();
 
       Chassis_Control();
+
+      main_task_exec_us = (uint32_t)(DWT_GetUs() - enter_us);
     }
+
     next_tick += period_ticks;
     osDelayUntil(next_tick);
     //osDelay(1);
