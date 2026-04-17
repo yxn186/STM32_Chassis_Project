@@ -17,15 +17,14 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "bsp_usb.h"
 #include "Serial.h"
 
 /*YOUR CODE*/
 extern bool Global_Init_Finished;
-
+extern void MX_USB_HOST_Init(void);
 /* Printf配置------------------------------------------------- */
 #ifndef STM32_PRINTF_USE_USB
-#define STM32_PRINTF_USE_USB 1
+#define STM32_PRINTF_USE_USB 0
 #endif
 
 #if STM32_PRINTF_USE_USB

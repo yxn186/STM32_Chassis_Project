@@ -22,7 +22,7 @@ extern "C" {
 /* Exported macros -----------------------------------------------------------*/
 
 // 缓冲区字节长度
-#define UART_BUFFER_SIZE 512
+#define UART_BUFFER_SIZE 1024
 
 /* Exported types ------------------------------------------------------------*/
 extern bool Global_Init_Finished;

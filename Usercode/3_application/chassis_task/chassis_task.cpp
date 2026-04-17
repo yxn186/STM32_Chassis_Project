@@ -8,13 +8,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "Chassis_Task.h"
+#include "Serial.h"
 #include "usart.h"
 #include <cstdint>
 #include <stdbool.h>
-#include "usbd_cdc_if.h"
-#include "bsp_usb.h"
 #include "cmsis_os2.h"
-#include "usb_device.h"
 #include "DJI_Motor.h"
 #include "MyMath.h"
 #include "Chassis.h"
@@ -204,15 +202,17 @@ static void Chassis_SlopePlaning_Calculate(float Target_Vx, float Target_Vy, flo
 extern "C" void StartInitTask(void *argument)
 {
  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
+  Serial_Init(&huart6);
+  MX_USB_HOST_Init();
   /* USER CODE BEGIN StartInitTask */
-  app_bmi088_init();
   
+  app_bmi088_init();
   /* Infinite loop */
   for(;;)
   {
     if(app_bmi088_init_process_loop())
     {
+      
       Chassis_Task_Init();
       Global_Init_Finished = true;
       osThreadTerminate(osThreadGetId());

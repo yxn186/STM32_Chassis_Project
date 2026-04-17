@@ -21,6 +21,9 @@
 
 
 /* ---------- Tx 环形缓冲区 ---------- */
+#undef Serial_RxBuffer_Size
+#define Serial_RxBuffer_Size                UART_BUFFER_SIZE
+
 static uint8_t Serial_TxBuffer_Data[Serial_TxBuffer_Size];
 static uint8_t Serial_RxBuffer_Data[Serial_RxBuffer_Size];
 

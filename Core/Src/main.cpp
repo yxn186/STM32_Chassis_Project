@@ -23,7 +23,7 @@
 #include "dma.h"
 #include "spi.h"
 #include "usart.h"
-#include "usb_device.h"
+#include "usb_host.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -31,6 +31,11 @@
 #include "Chassis_Task.h"
 #include "Serial.h"
 #include "mx_api.h"
+
+#include <sys/unistd.h>
+#include <stdint.h>
+#include "Serial.h"   
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,6 +68,19 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+extern "C" int _write(int file, char *ptr, int len)
+{
+    (void)file;
+
+    if (ptr == NULL || len <= 0)
+    {
+        return 0;
+    }
+
+    Serial_Send_Data((const uint8_t *)ptr, (uint16_t)len);
+    return len;
+}
 
 /**
  * @brief USB FS D+ 虚拟拔插
@@ -121,7 +139,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_USART1_UART_Init();
   MX_SPI1_Init();
   MX_USART6_UART_Init();
   MX_CAN1_Init();
