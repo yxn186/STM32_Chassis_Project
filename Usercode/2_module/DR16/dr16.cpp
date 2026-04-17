@@ -10,6 +10,7 @@
 
 #include "dr16.h"
 #include <string.h>
+#include "MyMath.h"
 
 /*YOUR CODE*/
 
@@ -134,11 +135,24 @@ void Class_DR16::Data_Process(uint16_t Length)
     // 数据处理过程
     Struct_DR16_UART_Data *tmp_buffer = (Struct_DR16_UART_Data *) UART_Manage_Object->Rx_Buffer;
 
+    // 1. 原始归一化
     // 摇杆信息 归一化处理
     Data.Right_X = (tmp_buffer->Channel_0 - Rocker_Offset) / Rocker_Num;
     Data.Right_Y = (tmp_buffer->Channel_1 - Rocker_Offset) / Rocker_Num;
     Data.Left_X = (tmp_buffer->Channel_2 - Rocker_Offset) / Rocker_Num;
     Data.Left_Y = (tmp_buffer->Channel_3 - Rocker_Offset) / Rocker_Num;
+
+    // 2. 基础中心死区
+    Data.Right_X = Apply_Dead_Zone(Data.Right_X, 0.03f);
+    Data.Right_Y = Apply_Dead_Zone(Data.Right_Y, 0.03f);
+    Data.Left_X  = Apply_Dead_Zone(Data.Left_X,  0.03f);
+    Data.Left_Y  = Apply_Dead_Zone(Data.Left_Y,  0.03f);
+
+    // 3. 轴向辅助（建议先只对左摇杆做，通常左摇杆控制底盘平移）
+    Apply_Axis_Assist(&Data.Left_X, &Data.Left_Y, 0.15f, 0.08f, 0.35f);
+
+    // 如果你右摇杆也想这样处理，就打开这一句
+    // Apply_Axis_Assist(&Data.Right_X, &Data.Right_Y, 0.15f, 0.08f, 0.35f);
 
     // 鼠标信息 归一化处理
     Data.Mouse_X = tmp_buffer->Mouse_X / 32768.0f;
@@ -147,6 +161,50 @@ void Class_DR16::Data_Process(uint16_t Length)
     
     // 左前轮信息
     Data.Yaw = (tmp_buffer->Channel_Yaw - Rocker_Offset) / Rocker_Num;
+    Data.Yaw = Apply_Dead_Zone(Data.Yaw, 0.03f);
+}
+
+/**
+ * @brief 一维死区处理
+ *
+ * @param Value 输入值
+ * @param Dead_Zone 死区阈值
+ * @return float 处理后的值
+ */
+float Class_DR16::Apply_Dead_Zone(float Value, float Dead_Zone)
+{
+    if (Value > -Dead_Zone && Value < Dead_Zone)
+    {
+        return 0.0f;
+    }
+    return Value;
+}
+
+/**
+ * @brief 摇杆主轴优先/轴向吸附处理
+ *
+ * @param X x轴输入
+ * @param Y y轴输入
+ * @param Main_Min 判定主轴“确实有操作”的最小值
+ * @param Cross_Abs_Max 副轴允许的最大绝对误差
+ * @param Cross_Ratio_Max 副轴相对主轴的最大比例
+ */
+void Class_DR16::Apply_Axis_Assist(float *X, float *Y, float Main_Min, float Cross_Abs_Max, float Cross_Ratio_Max)
+{
+    float abs_x = MyMath_Abs(*X);
+    float abs_y = MyMath_Abs(*Y);
+
+    // 用户主要想走Y方向：X很小则忽略X
+    if ((abs_y > Main_Min) && (abs_x < Cross_Abs_Max) && (abs_x < abs_y * Cross_Ratio_Max))
+    {
+        *X = 0.0f;
+    }
+
+    // 用户主要想走X方向：Y很小则忽略Y
+    if ((abs_x > Main_Min) && (abs_y < Cross_Abs_Max) && (abs_y < abs_x * Cross_Ratio_Max))
+    {
+        *Y = 0.0f;
+    }
 }
 
 /**

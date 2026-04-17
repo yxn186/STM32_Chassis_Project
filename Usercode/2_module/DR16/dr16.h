@@ -207,6 +207,7 @@ public:
     void Task_1ms_Data_Calculate(void);
 
 protected:
+
     // 初始化相关常量
 
     // 绑定的UART
@@ -240,6 +241,10 @@ protected:
     // 读写变量
 
     // 内部函数
+    float Apply_Dead_Zone(float Value, float Dead_Zone);
+
+    void Apply_Axis_Assist(float *X, float *Y, float Main_Min, float Cross_Abs_Max, float Cross_Ratio_Max);
+
 
     void Data_Process(uint16_t Length);
 
