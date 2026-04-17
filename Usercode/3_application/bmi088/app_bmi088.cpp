@@ -377,20 +377,20 @@ uint8_t app_bmi088_init_process_loop(void)
  * @brief BMI088 1ms周期任务 函数
  * 
  */
-void app_bmi088_1ms_task_get_now_pitch_yaw_roll(float *Yaw,float *Picth,float *Roll)
+void app_bmi088_1ms_task_get_now_pitch_yaw_roll(float *Yaw_Angle,float *Picth_Angle,float *Roll_Angle)
 {   
     if(bmi088_init_state == init_state_finish)//完成则进入任务循环
     {
         //ZXY欧拉角转换为云台前向的pitch和yaw
-        //euler_extrinsic_ZXY_body_axes_to_front_yaw_pitch_roll_deg(yaw,roll,pitch,1,0,0,0,0,1,&gimbal_yaw,&gimbal_pitch,&gimbal_roll);
+        euler_extrinsic_ZXY_body_axes_to_front_yaw_pitch_roll_deg(yaw,roll,pitch,1,0,0,0,0,1,&gimbal_yaw,&gimbal_pitch,&gimbal_roll);
         //euler_extrinsic_ZXY_to_front_yaw_pitch_deg(yaw,roll,pitch,&gimbal_yaw,&gimbal_pitch);
         //bmi088_mahony_zyx
         // *Picth = gimbal_pitch;
         // *Yaw = gimbal_yaw;
         // *Roll = gimbal_roll;
-        *Picth = pitch;
-        *Yaw = yaw;
-        *Roll = roll;
+        *Picth_Angle = gimbal_pitch;
+        *Yaw_Angle = gimbal_yaw;
+        *Roll_Angle = gimbal_roll;
     }
 }
 

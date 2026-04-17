@@ -35,6 +35,7 @@ class Class_Chassis
   float r_inv = 4.705882352941176f;             //底盘半径倒数
   float motor_gear_ratio = 15.764705882453f;    //减速比
   float motor_gear_ratio_inv = 0.06346153846f;  //减速比倒数
+  float Chassis_Mass = 50.0f;                   //底盘质量
 
   //存储四个电机ID
   uint8_t Motor_ID[4];
@@ -53,6 +54,10 @@ class Class_Chassis
   float Target_Force_X = 0;
   float Target_Force_Y = 0;
   float Target_Force_T = 0;
+
+  //底盘力前馈补偿
+  float Force_FeedForward_X = 0;
+  float Force_FeedForward_Y = 0;
 
   //各轮实际角速度
   float Motor_Current_AngleSpeed[4];
@@ -75,10 +80,26 @@ class Class_Chassis
 
   float MotorCurrent_Out_K_Torque_to_Current;//经验性比例系数
 
+  bool Slope_Gravity_FeedForward_Flag = false;
+
   float Get_Current_AngleSpeed_w(void)
   {
     return PID_W.Speed_States.Current;
   }
+
+  /**
+   * @brief 底盘坡度重力前馈补偿
+   * 
+   * @param Pitch 俯仰角
+   * @param Roll 横滚角
+   */
+  void Slope_Gravity_FeedForward(float Pitch, float Roll);
+
+  /**
+  * @brief 重置底盘坡度重力前馈补偿
+  * 
+  */
+  void Slope_Gravity_FeedForward_Reset(void);
 
   /**
   * @brief 底盘电机目标角速度计算
@@ -169,6 +190,22 @@ void Chassis_Init(void);
  * @param Z 
  */
 void Chassis_loop(float X,float Y,float Z);
+
+/**
+ * @brief 底盘循环函数+坡度重力前馈补偿
+ * 
+ * @param X 
+ * @param Y 
+ * @param Z 
+ */
+void Chassis_Loop_With_Slope_Gravity_FeedForward(float X,float Y,float Z,float Pitch, float Roll);
+
+
+/**
+ * @brief 重置底盘坡度重力前馈补偿
+ * 
+ */
+void Chassis_Slope_Gravity_FeedForward_Reset(void);
 
 /**
  * @brief 重置所有底盘PID的积分项

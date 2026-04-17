@@ -199,6 +199,73 @@ void Chassis_loop(float X,float Y,float Z)
   Chassis.Push_Control_Value_To_Motor();
 }
 
+/**
+ * @brief 底盘循环函数+坡度重力前馈补偿
+ * 
+ * @param X 
+ * @param Y 
+ * @param Z 
+ */
+void Chassis_Loop_With_Slope_Gravity_FeedForward(float X,float Y,float Z,float Pitch, float Roll)
+{
+  Chassis.Set_Target_Speed_XYZ(X,Y,Z);
+
+  //纯速度环
+  //Chassis.Speed_Control();
+
+  if(MyMath_Abs(Pitch) > 10.0f || MyMath_Abs(Roll) > 10.0f)
+  {
+    //坡度重力前馈补偿
+    Chassis.Slope_Gravity_FeedForward(Pitch, Roll);
+  }
+  else
+  {
+    Chassis.Slope_Gravity_FeedForward_Reset();
+  }
+
+  //速度→力矩环
+  Chassis.Speed_To_Force_Control();
+
+  //双环叠加
+  //Chassis.Force_Control();
+
+  Chassis.Push_Control_Value_To_Motor();
+}
+
+/**
+ * @brief 重置底盘坡度重力前馈补偿
+ * 
+ */
+void Chassis_Slope_Gravity_FeedForward_Reset(void)
+{
+  Chassis.Slope_Gravity_FeedForward_Reset();
+}
+
+/**
+ * @brief 底盘坡度重力前馈补偿
+ * 
+ * @param Pitch 俯仰角
+ * @param Roll 横滚角
+ */
+void Class_Chassis::Slope_Gravity_FeedForward(float Pitch, float Roll)
+{
+  //简单的重力补偿，假设底盘质心在水平面上，且Pitch/Roll角度较小
+  //Pitch给Y补偿，Roll给X补偿
+  Chassis.Force_FeedForward_X = Chassis.Chassis_Mass * 9.81f * sinf(Roll * DEG2RAD);
+  Chassis.Force_FeedForward_Y = Chassis.Chassis_Mass * 9.81f * sinf(Pitch * DEG2RAD);
+  Chassis.Slope_Gravity_FeedForward_Flag = true;
+}
+
+/**
+ * @brief 重置底盘坡度重力前馈补偿
+ * 
+ */
+void Class_Chassis::Slope_Gravity_FeedForward_Reset(void)
+{
+  Chassis.Force_FeedForward_X = 0;
+  Chassis.Force_FeedForward_Y = 0;
+  Chassis.Slope_Gravity_FeedForward_Flag = false;
+}
 
 /**
  * @brief 底盘电机目标角速度计算
@@ -278,12 +345,24 @@ void Class_Chassis::Speed_PID_To_Force_Calculate(void)
   Chassis.PID_X.Control_Speed_To_Out();
   Chassis.PID_Y.Control_Speed_To_Out();
   Chassis.PID_W.Control_Speed_To_Out();
-
+  
+  // Chassis.Target_Force_X = Chassis.PID_X.Get_Out();
+  // Chassis.Target_Force_Y = Chassis.PID_Y.Get_Out();
+  // Chassis.Target_Force_T = Chassis.PID_W.Get_Out();
 
   //输出为力
-  Chassis.Target_Force_X = Chassis.PID_X.Get_Out();
-  Chassis.Target_Force_Y = Chassis.PID_Y.Get_Out();
-  Chassis.Target_Force_T = Chassis.PID_W.Get_Out();
+  if(!Chassis.Slope_Gravity_FeedForward_Flag)
+  {
+    Chassis.Target_Force_X = Chassis.PID_X.Get_Out();
+    Chassis.Target_Force_Y = Chassis.PID_Y.Get_Out();
+    Chassis.Target_Force_T = Chassis.PID_W.Get_Out();
+  }
+  else
+  {
+    Chassis.Target_Force_X = Chassis.PID_X.Get_Out() + Chassis.Force_FeedForward_X;
+    Chassis.Target_Force_Y = Chassis.PID_Y.Get_Out() + Chassis.Force_FeedForward_Y;
+    Chassis.Target_Force_T = Chassis.PID_W.Get_Out();
+  }
 }
 
 /**
