@@ -63,15 +63,15 @@ void Chassis_Init(void)
     Chassis.PID_Motor[i].Speed_Target_High = 0;
     Chassis.PID_Motor[i].Speed_Target_Low = 0;
 
-    Chassis.PID_Motor[i].Out_High = 9000;
-    Chassis.PID_Motor[i].Out_Low  = -9000;
+    Chassis.PID_Motor[i].Out_High = 16000;
+    Chassis.PID_Motor[i].Out_Low  = -16000;
   }
 
   //PID参数 底盘
 
   //X
-  Chassis.PID_X.Kp_s = 1500;
-  Chassis.PID_X.Ki_s = 3;
+  Chassis.PID_X.Kp_s = 3000;
+  Chassis.PID_X.Ki_s = 26;
   Chassis.PID_X.Kd_s = 0;
 
   Chassis.PID_X.ErrorInt_High_s = 100;
@@ -88,12 +88,12 @@ void Chassis_Init(void)
   Chassis.PID_X.Speed_Target_High = 0;
   Chassis.PID_X.Speed_Target_Low = 0;
 
-  Chassis.PID_X.Out_High = 500;
-  Chassis.PID_X.Out_Low  = -500;
+  Chassis.PID_X.Out_High = 1000;
+  Chassis.PID_X.Out_Low  = -1000;
 
   //Y
-  Chassis.PID_Y.Kp_s = 1500;
-  Chassis.PID_Y.Ki_s = 3;
+  Chassis.PID_Y.Kp_s = 3000;
+  Chassis.PID_Y.Ki_s = 26;
   Chassis.PID_Y.Kd_s = 0;
 
   Chassis.PID_Y.ErrorInt_High_s = 100;
@@ -110,16 +110,16 @@ void Chassis_Init(void)
   Chassis.PID_Y.Speed_Target_High = 0;
   Chassis.PID_Y.Speed_Target_Low = 0;
 
-  Chassis.PID_Y.Out_High = 500;
-  Chassis.PID_Y.Out_Low  = -500;
+  Chassis.PID_Y.Out_High = 1000;
+  Chassis.PID_Y.Out_Low  = -1000;
 
   //Z or W
-  Chassis.PID_W.Kp_s = 200;
-  Chassis.PID_W.Ki_s = 0.15;
+  Chassis.PID_W.Kp_s = 220;
+  Chassis.PID_W.Ki_s = 0.2;
   Chassis.PID_W.Kd_s = 0;
 
-  Chassis.PID_W.ErrorInt_High_s = 80;
-  Chassis.PID_W.ErrorInt_Low_s = -80;
+  Chassis.PID_W.ErrorInt_High_s = 100;
+  Chassis.PID_W.ErrorInt_Low_s = -100;
 
   Chassis.PID_W.Integral_Stop_Near_Zero_Enable_s = 1;
   Chassis.PID_W.Integral_Stop_Target_Abs_Threshold_s = 0.05f;
@@ -132,8 +132,8 @@ void Chassis_Init(void)
   Chassis.PID_W.Speed_Target_High = 0;
   Chassis.PID_W.Speed_Target_Low = 0;
 
-  Chassis.PID_W.Out_High = 500;
-  Chassis.PID_W.Out_Low  = -500;
+  Chassis.PID_W.Out_High = 1000;
+  Chassis.PID_W.Out_Low  = -1000;
 
   //经验性比例系数
   Chassis.MotorCurrent_Out_K_Torque_to_Current = 4500;//4500？

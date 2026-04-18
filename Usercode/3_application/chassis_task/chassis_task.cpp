@@ -44,10 +44,10 @@ Class_SlopePlaning SlopePlaning_Z;
 Class_DR16 DR16;
 
 static constexpr float CHASSIS_SLOPE_DT = 0.001f;
-static constexpr float CHASSIS_SLOPE_ACCEL_X = 10.0f;
-static constexpr float CHASSIS_SLOPE_ACCEL_Y = 10.0f;
+static constexpr float CHASSIS_SLOPE_ACCEL_X = 5.0f;
+static constexpr float CHASSIS_SLOPE_ACCEL_Y = 5.0f;
 static constexpr float CHASSIS_SLOPE_ACCEL_Z = 30.0f;
-
+ 
 //底盘模式枚举
 typedef enum
 {
@@ -75,13 +75,13 @@ typedef struct
   float CHASSIS_VY_MAX = 1.0f;    // 左右最大线速度 (m/s)
   float CHASSIS_VZ_MAX = 3.0f;    // 最大旋转角速度 (rad/s)
   
-  float CHASSIS_VX_MAX_HIGH = 2.0f;    // 前后最大线速度 (m/s)
-  float CHASSIS_VY_MAX_HIGH = 2.0f;    // 左右最大线速度 (m/s)
-  float CHASSIS_VZ_MAX_HIGH = 7.0f;    // 最大旋转角速度 (rad/s)
+  float CHASSIS_VX_MAX_HIGH = 1.5f;    // 前后最大线速度 (m/s)
+  float CHASSIS_VY_MAX_HIGH = 1.5f;    // 左右最大线速度 (m/s)
+  float CHASSIS_VZ_MAX_HIGH = 6.0f;    // 最大旋转角速度 (rad/s)
 
   // 正弦小陀螺模式参数
   float LITTLE_TOP_SINE_MIN_SPEED = 5.0f;   // 正弦角速度最低值 (rad/s)
-  float LITTLE_TOP_SINE_MAX_SPEED = 9.0f;   // 正弦角速度最高值 (rad/s)
+  float LITTLE_TOP_SINE_MAX_SPEED = 7.0f;   // 正弦角速度最高值 (rad/s)
   float LITTLE_TOP_SINE_FREQ_HZ   = 0.8f;   // 正弦频率 (Hz)
 } Chassis_Remote_Data_t;
 
@@ -332,7 +332,7 @@ void Chassis_Control(void)
     Chassis_PID_Reset();
     Chassis_SlopePlaning_Reset(0.0f);
 
-    Chassis_Slope_Gravity_FeedForward_Reset();
+    //Chassis_Slope_Gravity_FeedForward_Reset();
 
     // 切换到停止模式时，先刹停 1s 再断电
     if (Chassis_State == Stop_Mode)
@@ -439,7 +439,8 @@ void Chassis_Control(void)
       // 把遥控器（云台系）速度，转换到底盘系
       Chassis_Vector_Gimbal_To_Chassis(Vx, Vy, theta_rad, &vx_chassis, &vy_chassis);
 
-      Chassis_loop(vx_chassis, vy_chassis, wz_cmd);
+      //Chassis_loop(vx_chassis, vy_chassis, wz_cmd);
+      Chassis_Loop_With_Slope_Gravity_FeedForward(vx_chassis, vy_chassis, wz_cmd, Picth, Roll);
       break;
     }
     //小陀螺模式：高速档
@@ -470,7 +471,8 @@ void Chassis_Control(void)
       // 把遥控器（云台系）速度，转换到底盘系
       Chassis_Vector_Gimbal_To_Chassis(Vx, Vy, theta_rad, &vx_chassis, &vy_chassis);
 
-      Chassis_loop(vx_chassis, vy_chassis, wz_cmd);
+      //Chassis_loop(vx_chassis, vy_chassis, wz_cmd);
+      Chassis_Loop_With_Slope_Gravity_FeedForward(vx_chassis, vy_chassis, wz_cmd, Picth, Roll);
       break;
     }
 
@@ -508,7 +510,8 @@ void Chassis_Control(void)
 
       Chassis_Vector_Gimbal_To_Chassis(Vx, Vy, theta_rad, &vx_chassis, &vy_chassis);
 
-      Chassis_loop(vx_chassis, vy_chassis, wz_cmd);
+      //Chassis_loop(vx_chassis, vy_chassis, wz_cmd);
+      Chassis_Loop_With_Slope_Gravity_FeedForward(vx_chassis, vy_chassis, wz_cmd, Picth, Roll);
       break;
     }
 
@@ -574,7 +577,7 @@ void Chassis_DR16_Switch_Detect(void)
   // 遥控器离线时，强制停止模式，防止底盘失控
   if (DR16.Get_Status() != DR16_Status_ENABLE)
   {
-    Chassis_State = No_Power_Mode;
+    Chassis_State = Stop_Mode;
     return;
   }
 

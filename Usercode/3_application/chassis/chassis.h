@@ -35,7 +35,7 @@ class Class_Chassis
   float r_inv = 4.705882352941176f;             //底盘半径倒数
   float motor_gear_ratio = 15.764705882453f;    //减速比
   float motor_gear_ratio_inv = 0.06346153846f;  //减速比倒数
-  float Chassis_Mass = 50.0f;                   //底盘质量
+  float Chassis_Mass = 7.7f;                   //底盘质量
 
   //存储四个电机ID
   uint8_t Motor_ID[4];
