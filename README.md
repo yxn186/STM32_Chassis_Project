@@ -1,6 +1,6 @@
 # STM32 F405 底盘控制工程
 
-基于 `STM32F405RGT6 + HAL + FreeRTOS + CubeMX + CMake` 的四轮麦克纳姆底盘控制工程。
+基于 `STM32F405RGT6 + HAL + FreeRTOS + CubeMX + CMake` 的四轮全向轮底盘控制工程。
 
 当前仓库已经接入并联调的主链路是：
 
